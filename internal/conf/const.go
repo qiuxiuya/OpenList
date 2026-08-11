@@ -95,6 +95,9 @@ const (
 	// thunder_browser
 	ThunderBrowserTempDir = "thunder_browser_temp_dir"
 
+	// guangyapan
+	GuangYaPanTempDir = "guangyapan_temp_dir"
+
 	// single
 	Token         = "token"
 	IndexProgress = "index_progress"
@@ -167,6 +170,8 @@ const (
 	LoginMaxRetries    = "login_max_retries"
 	LoginIPWhitelist   = "login_ip_whitelist"
 	LoginIPBlacklist   = "login_ip_blacklist"
+	MultipartEnabled                      = "multipart_enabled"
+	MultipartChunkSize                    = "multipart_chunk_size"
 )
 
 const (
