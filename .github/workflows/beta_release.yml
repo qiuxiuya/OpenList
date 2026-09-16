@@ -68,41 +68,52 @@ jobs:
             hash: "md5"
             flags: ""
             goflags: ""
+            buildsh: ""
           - target: "linux-(mips|mips64|mipsle|mips64le|loong64)-musl*" # musl-compat-family
             hash: "md5-linux-musl-mips"
             flags: "-ldflags=-linkmode external -extldflags '-static -fpic'"
             goflags: ""
             musl_static: "true"
+            buildsh: ""
           - target: "linux-!(arm*|mips|mips64|mipsle|mips64le|loong64)-musl*" # musl-not-arm (exclude compat-family)
             hash: "md5-linux-musl"
             flags: "-ldflags=-linkmode external -extldflags '-static -fpic'"
             goflags: ""
             musl_static: "true"
+            buildsh: ""
           - target: "linux-arm*-musl*" #musl-arm
             hash: "md5-linux-musl-arm"
             flags: "-ldflags=-linkmode external -extldflags '-static -fpic'"
             goflags: ""
             musl_static: "true"
+            buildsh: ""
           - target: "windows-arm64" #win-arm64
             hash: "md5-windows-arm64"
             flags: ""
             goflags: ""
             musl_static: "false"
+            buildsh: ""
           - target: "windows7-*" #win7
             hash: "md5-windows7"
             flags: ""
             goflags: "-tags=sqlite_cgo_compat"
             musl_static: "false"
+            buildsh: ""
           - target: "android-*" #android
             hash: "md5-android"
             flags: ""
             goflags: ""
             musl_static: "false"
+            buildsh: ""
           - target: "freebsd-*" #freebsd
             hash: "md5-freebsd"
             flags: ""
             goflags: ""
             musl_static: "false"
+            # cgo-actions hardcodes the retired 14.3-RELEASE sysroot, which the
+            # FreeBSD project no longer serves (404). build.sh probes the latest
+            # available 14.x instead, so this target builds via build.sh.
+            buildsh: "freebsd"
 
     name: Beta Release
     runs-on: ubuntu-latest
@@ -118,12 +129,14 @@ jobs:
           go-version: "1.27.1"
 
       - name: Setup web
+        if: matrix.buildsh == ''
         run: bash build.sh dev web
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           FRONTEND_REPO: ${{ vars.FRONTEND_REPO }}
 
       - name: Build
+        if: matrix.buildsh == ''
         uses: OpenListTeam/cgo-actions@6fcace5934c36d70503dba06e2396bb58b766130 # v1.2.5
         with:
           targets: ${{ matrix.target }}
@@ -142,6 +155,15 @@ jobs:
             github.com/OpenListTeam/OpenList/v4/internal/conf.WebVersion=rolling
         env:
           GOFLAGS: ${{ matrix.goflags }}
+
+      - name: Build (build.sh)
+        # build.sh resolves the FreeBSD version at build time and also produces
+        # the compressed archives, so the Compress step is skipped below.
+        if: matrix.buildsh != ''
+        run: bash build.sh beta ${{ matrix.buildsh }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          FRONTEND_REPO: ${{ vars.FRONTEND_REPO }}
 
       - name: Verify musl binaries are static
         if: matrix.musl_static == 'true'
@@ -162,6 +184,7 @@ jobs:
           done
 
       - name: Compress
+        if: matrix.buildsh == ''
         run: |
           bash build.sh zip ${{ matrix.hash }}
         env:
