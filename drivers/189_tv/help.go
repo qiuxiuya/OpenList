@@ -89,7 +89,7 @@ func (t *Time) Unmarshal(b []byte) error {
 	// 189 返回的时间可能自带时区（如 "Aug 11, 2026, 10:37:18 PM +08"），也可能不带，分别尝试
 	for _, s := range []string{bs, bs + " +08"} {
 		for _, f := range []string{"2006-01-02 15:04:05 -07", "Jan 2, 2006 3:04:05 PM -07", "Jan 2, 2006, 3:04:05 PM -07"} {
-			v, err = time.ParseInLocation(f, s, time.Local)
+			v, err = time.ParseInLocation(f, s, utils.CNLoc)
 			if err == nil {
 				break
 			}
